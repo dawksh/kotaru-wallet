@@ -1,21 +1,30 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 mod keypair;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-struct Args {
-    #[arg(short, long)]
-    name: String,
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Add {
+        #[arg(short, long)]
+        name: String,
 
-    #[arg(short, long, default_value_t = 1)]
-    count: u8,
-
-    #[arg(long)]
-    key: String,
+        #[arg(long)]
+        key: String,
+    },
 }
 
 fn main() {
-    let args = Args::parse();
-    keypair::store_keypair(&args.name, &args.key);
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Add { name, key } => {
+            keypair::store_keypair(&name, &key);
+        }
+    }
 }
