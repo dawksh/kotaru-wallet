@@ -1,10 +1,26 @@
+use crate::utils::get_config_path;
+use alloy::primitives::{Address, SigningKey};
 use std::fs::{read_to_string, write};
 
-pub fn store_keypair(name: &str, key: &str) {
-    let config_path = dirs::home_dir()
-        .map(|p| p.join(".config/.kotarurc"))
-        .expect("Could not determine home directory");
+pub fn get_wallets() {
+    let config_path = get_config_path();
+    match read_to_string(&config_path) {
+        Ok(data) => {
+            for line in data.lines() {
+                if let Some((name, key)) = line.split_once("=") {
+                    let wallet = EthereumWallet::from(key);
+                    println!("{} -> {}", name, key);
+                }
+            }
+        }
+        Err(err) => {
+            println!("Failed to read config. \n {}", err);
+        }
+    }
+}
 
+pub fn store_keypair(name: &str, key: &str) {
+    let config_path = get_config_path();
     let new_entry = format!("{}={}", name, key);
 
     let new_content = match read_to_string(&config_path) {

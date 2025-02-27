@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 mod keypair;
+mod utils;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -17,14 +18,21 @@ enum Commands {
         #[arg(long)]
         key: String,
     },
+
+    Get {},
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
         Commands::Add { name, key } => {
             keypair::store_keypair(&name, &key);
+        }
+
+        Commands::Get {} => {
+            keypair::get_wallets();
         }
     }
 }
