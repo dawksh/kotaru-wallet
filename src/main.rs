@@ -1,3 +1,5 @@
+use core::panic;
+
 use clap::{Parser, Subcommand};
 mod keypair;
 mod utils;
@@ -19,7 +21,10 @@ enum Commands {
         key: String,
     },
 
-    Get {},
+    Get {
+        #[arg(short)]
+        balance: bool,
+    },
 }
 
 #[tokio::main]
@@ -31,8 +36,17 @@ async fn main() {
             keypair::store_keypair(&name, &key);
         }
 
-        Commands::Get {} => {
-            keypair::get_wallets();
+        Commands::Get { balance } => {
+            if balance {
+                match keypair::get_balance().await {
+                    Err(err) => {
+                        panic!("Error occurred");
+                    }
+                    _ => {}
+                }
+            } else {
+                keypair::get_wallets();
+            }
         }
     }
 }

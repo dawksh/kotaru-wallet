@@ -4,7 +4,7 @@ building this wallet for learning rust for EVM
 
 ## todo
 
-- [ ] wallet creation
+- [ ] wallet add
 - [ ] fetching balance
 - [ ] changing rpc
 - [ ] sending tx
