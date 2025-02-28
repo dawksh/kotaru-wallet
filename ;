@@ -1,9 +1,6 @@
 use crate::utils::get_config_path;
-use alloy::signers::local::LocalSigner;
-use std::{
-    fs::{read_to_string, write},
-    str::FromStr,
-};
+use alloy::primitives::{Address, SigningKey};
+use std::fs::{read_to_string, write};
 
 pub fn get_wallets() {
     let config_path = get_config_path();
@@ -11,8 +8,7 @@ pub fn get_wallets() {
         Ok(data) => {
             for line in data.lines() {
                 if let Some((name, key)) = line.split_once("=") {
-                    let signer = LocalSigner::from_str(key).unwrap();
-                    println!("{} -> {}", name, signer.address());
+                    println!("{} -> {}", name, key);
                 }
             }
         }
