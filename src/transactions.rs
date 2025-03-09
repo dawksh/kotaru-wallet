@@ -1,5 +1,5 @@
 use crate::utils::{get_config_path, get_rpc_url};
-use alloy::network::TransactionBuilder;
+use alloy::network::{EthereumWallet, TransactionBuilder};
 use alloy::primitives::{Address, U256};
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::rpc::types::TransactionRequest;
@@ -26,7 +26,8 @@ pub async fn send_transaction(name: &str, amount: f64, to: &str) -> Result<()> {
     let key = get_wallet_key(name);
     let signer = LocalSigner::from_str(&key).unwrap();
     let rpc = get_rpc_url();
-    let provider = ProviderBuilder::new().on_http(rpc);
+    let wallet = EthereumWallet::from(signer.clone());
+    let provider = ProviderBuilder::new().wallet(wallet).on_http(rpc);
 
     let balance = provider.get_balance(signer.address()).await?;
     let wei_value = (amount * 1e18_f64) as u128;
@@ -47,18 +48,16 @@ pub async fn send_transaction(name: &str, amount: f64, to: &str) -> Result<()> {
         .with_to(receiver)
         .with_value(wei_amount)
         .with_nonce(nonce + 1)
-        .with_chain_id(chain_id)
-        .with_gas_limit(21_000)
-        .with_max_priority_fee_per_gas(1_000_000_000)
-        .with_max_fee_per_gas(20_000_000_000);
+        .with_chain_id(chain_id);
 
-    let pending_tx = provider.send_transaction(tx).await?;
-    let receipt = pending_tx.get_receipt().await?;
+    let tx_hash = provider
+        .send_transaction(tx)
+        .await?
+        .with_required_confirmations(2)
+        .watch()
+        .await?;
 
-    println!(
-        "Transaction Executed with Hash: {}",
-        receipt.transaction_hash
-    );
+    println!("Transaction Executed with Hash: {}", tx_hash);
 
     Ok(())
 }
