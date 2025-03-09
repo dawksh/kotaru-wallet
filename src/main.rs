@@ -1,74 +1,39 @@
 use core::panic;
 
-use clap::{Parser, Subcommand};
+use clap::Parser;
+
+use self::cli::{CliArgs, CliSubCommand};
+
+mod cli;
 mod keypair;
 mod transactions;
 mod utils;
 
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Subcommand, Debug)]
-enum Commands {
-    Add {
-        #[arg(short, long)]
-        name: String,
-
-        #[arg(long)]
-        key: String,
-    },
-
-    Get {
-        #[arg(short)]
-        balance: bool,
-    },
-
-    Send {
-        #[arg(short)]
-        value: f64,
-
-        #[arg(short)]
-        account: String,
-
-        #[arg(short)]
-        to: String,
-    },
-}
-
 #[tokio::main]
-async fn main() {
-    let cli = Cli::parse();
+async fn main() -> anyhow::Result<()> {
+    let CliArgs { sub_command } = CliArgs::try_parse()?;
 
-    match cli.command {
-        Commands::Add { name, key } => {
-            keypair::store_keypair(&name, &key);
+    match sub_command {
+        CliSubCommand::Add { name, key } => {
+            keypair::store_keypair(&name, &key).await?;
         }
 
-        Commands::Get { balance } => {
+        CliSubCommand::Get { balance } => {
             if balance {
-                match keypair::get_balance().await {
-                    Err(_err) => {
-                        panic!("Error occurred");
-                    }
-                    _ => {}
+                if let Err(_err) = keypair::get_balance().await {
+                    panic!("Error occurred");
                 }
             } else {
                 keypair::get_wallets();
             }
         }
 
-        Commands::Send { value, account, to } => {
-            match transactions::send_transaction(&account, value, &to).await {
-                Err(_err) => {
-                    print!("{}", _err);
-                    panic!("Error occurred");
-                }
-                _ => {}
-            }
+        CliSubCommand::Send { value, account, to } => {
+            transactions::send_transaction(&account, value, &to)
+                .await
+                .map_err(|err| anyhow::anyhow!("Failed to send transaction: {}", err))?;
         }
     }
+
+    Ok(())
 }

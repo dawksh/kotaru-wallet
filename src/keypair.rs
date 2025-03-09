@@ -2,12 +2,10 @@ use crate::utils::{get_config_path, get_rpc_url};
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::LocalSigner;
 use eyre::Result;
-use std::{
-    fs::{read_to_string, write},
-    str::FromStr,
-};
+use std::{fs::read_to_string, str::FromStr};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use tokio::fs::read_to_string as tokio_read_to_string;
+use tokio::fs::{read_to_string as tokio_read_to_string, File};
 
 pub fn get_wallets() {
     let config_path = get_config_path();
@@ -47,16 +45,34 @@ pub async fn get_balance() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn store_keypair(name: &str, key: &str) {
-    let config_path = get_config_path();
+pub async fn store_keypair(name: &str, key: &str) -> Result<(), tokio::io::Error> {
+    // Get the path to the config file
+    let config_path = crate::utils::get_config_path();
     let new_entry = format!("{}={}", name, key);
 
-    let new_content = match read_to_string(&config_path) {
-        Ok(data) => format!("{}\n{}", data.trim(), new_entry), // Append keypair
-        Err(_) => new_entry, // If file doesn't exist, create a new one
+    let (mut file, new_content) = match File::open(&config_path).await {
+        Ok(mut file) => {
+            // Read the file to a buffer
+            let mut content = String::new();
+            file.read_to_string(&mut content).await?;
+
+            // Trim the content and concatenate the new entry
+            let new_content = format!("{}\n{}", content.trim(), new_entry);
+
+            // return the file and the new content
+            (file, new_content)
+        }
+        Err(err) if err.kind() == tokio::io::ErrorKind::NotFound => {
+            // Create the file if it doesn't exist
+            let file = File::create(&config_path).await?;
+
+            // return the file and the new entry
+            (file, new_entry) // Create new file
+        }
+        Err(err) => {
+            panic!("Error occurred: {}", err);
+        }
     };
 
-    if let Err(err) = write(&config_path, new_content) {
-        println!("Failed to write file: {}", err);
-    }
+    file.write_all(new_content.as_bytes()).await
 }
