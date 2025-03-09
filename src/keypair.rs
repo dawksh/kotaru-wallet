@@ -1,4 +1,4 @@
-use crate::utils::get_config_path;
+use crate::utils::{get_config_path, get_rpc_url};
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::LocalSigner;
 use eyre::Result;
@@ -33,7 +33,7 @@ pub async fn get_balance() -> Result<(), Box<dyn std::error::Error>> {
             for line in data.lines() {
                 if let Some((name, key)) = line.split_once("=") {
                     let signer = LocalSigner::from_str(key).unwrap();
-                    let rpc = "https://base.llamarpc.com".parse().unwrap();
+                    let rpc = get_rpc_url();
                     let provider = ProviderBuilder::new().on_http(rpc);
                     let balance = provider.get_balance(signer.address()).await.unwrap();
                     println!("{} -> {} with {} ETH", name, signer.address(), balance);

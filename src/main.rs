@@ -2,6 +2,7 @@ use core::panic;
 
 use clap::{Parser, Subcommand};
 mod keypair;
+mod transactions;
 mod utils;
 
 #[derive(Parser, Debug)]
@@ -25,6 +26,17 @@ enum Commands {
         #[arg(short)]
         balance: bool,
     },
+
+    Send {
+        #[arg(short)]
+        value: f64,
+
+        #[arg(short)]
+        account: String,
+
+        #[arg(short)]
+        to: String,
+    },
 }
 
 #[tokio::main]
@@ -39,13 +51,23 @@ async fn main() {
         Commands::Get { balance } => {
             if balance {
                 match keypair::get_balance().await {
-                    Err(err) => {
+                    Err(_err) => {
                         panic!("Error occurred");
                     }
                     _ => {}
                 }
             } else {
                 keypair::get_wallets();
+            }
+        }
+
+        Commands::Send { value, account, to } => {
+            match transactions::send_transaction(&account, value, &to).await {
+                Err(_err) => {
+                    print!("{}", _err);
+                    panic!("Error occurred");
+                }
+                _ => {}
             }
         }
     }
