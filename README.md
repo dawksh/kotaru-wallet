@@ -4,8 +4,8 @@ building this wallet for learning rust for EVM
 
 ## todo
 
-- [ ] wallet add
-- [ ] fetching balance
+- [x] wallet add
+- [x] fetching balance
 - [ ] changing rpc
-- [ ] sending tx
+- [x] sending tx - only basic txns like ether transfer right now
 - [ ] encrypt priv keys
