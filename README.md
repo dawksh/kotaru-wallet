@@ -1,6 +1,8 @@
 # kotaru wallet
 
-building this wallet for learning rust for EVM
+CLI Based EVM wallet written in Rust. Built using `alloy-rs`.
+
+Currently only supports Base Sepolia.
 
 ## todo
 
@@ -9,6 +11,7 @@ building this wallet for learning rust for EVM
 -   [ ] changing rpc
 -   [x] sending tx - only basic txns like ether transfer right now
 -   [ ] encrypt priv keys
+-   [ ] contract deployments using bytecode
 
 ## 🚀 Installation
 
