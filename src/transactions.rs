@@ -50,7 +50,7 @@ pub async fn send_transaction(name: &str, amount: f64, to: &str) -> Result<()> {
     let tx = TransactionRequest::default()
         .with_to(receiver)
         .with_value(wei_amount)
-        .with_nonce(nonce + 1)
+        .with_nonce(nonce)
         .with_chain_id(chain_id)
         .with_gas_price(extra_gas_price) // Use higher gas price
         .with_gas_limit(gas_limit.to::<u64>());
@@ -58,9 +58,10 @@ pub async fn send_transaction(name: &str, amount: f64, to: &str) -> Result<()> {
     let tx_hash = provider
         .send_transaction(tx)
         .await?
-        .with_required_confirmations(2)
+        .with_required_confirmations(1)
         .watch()
-        .await?;
+        .await
+        .unwrap();
 
     println!("Transaction Executed with Hash: {}", tx_hash);
 
